@@ -1,0 +1,466 @@
+kubectl create ns my-namespace
+
+kubectl get ns 
+kubectl get namespaces
+
+kubectl delete ns my-namespace
+
+# Run the pod
+
+kubectl run <podname> --image=<imageName>:latest
+
+kubectl run nginx-web-server --image=nginx:latest
+
+kaushik@Kaushiks-MacBook-Air minikube-ns % kubectl get pods
+NAME                           READY   STATUS    RESTARTS       AGE
+dept-service-fd4dc5f89-76m2t   2/2     Running   4 (4h4m ago)   380d
+dept-service-fd4dc5f89-m6fkz   2/2     Running   4 (4h4m ago)   380d
+dept-service-fd4dc5f89-nzd56   2/2     Running   3 (4h4m ago)   380d
+dept-service-fd4dc5f89-xn2pt   2/2     Running   4 (4h4m ago)   380d
+nginx-web-server               1/1     Running   0              37s
+
+
+kubectl describe pod nginx-web-server
+
+
+
+Name:             nginx-web-server
+Namespace:        default
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Tue, 20 Aug 2024 13:01:19 +0530
+Labels:           run=nginx-web-server
+Annotations:      <none>
+Status:           Running
+IP:               10.244.0.9
+IPs:
+  IP:  10.244.0.9
+Containers:
+  nginx-web-server:
+    Container ID:   docker://64202bf671054cb3e8b45e8975434e5afd34a7ddf89c6863586d503e9b4febf5
+    Image:          nginx:latest
+    Image ID:       docker-pullable://nginx@sha256:447a8665cc1dab95b1ca778e162215839ccbb9189104c79d7ec3a81e14577add
+    Port:           <none>
+    Host Port:      <none>
+    State:          Running
+      Started:      Tue, 20 Aug 2024 13:01:24 +0530
+    Ready:          True
+    Restart Count:  0
+    Environment:    <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-m8gbb (ro)
+Conditions:
+  Type              Status
+  Initialized       True
+  Ready             True
+  ContainersReady   True
+  PodScheduled      True
+Volumes:
+  kube-api-access-m8gbb:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    ConfigMapOptional:       <nil>
+    DownwardAPI:             true
+QoS Class:                   BestEffort
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  105s  default-scheduler  Successfully assigned default/nginx-web-server to minikube
+  Normal  Pulling    105s  kubelet            Pulling image "nginx:latest"
+  Normal  Pulled     101s  kubelet            Successfully pulled image "nginx:latest" in 4.733608211s (4.733707544s including waiting)
+  Normal  Created    101s  kubelet            Created container nginx-web-server
+  Normal  Started    101s  kubelet            Started container nginx-web-server
+
+
+
+
+kubectl get nodes
+
+
+kaushik@Kaushiks-MacBook-Air minikube-ns % kubectl get nodes
+NAME       STATUS   ROLES           AGE    VERSION
+minikube   Ready    control-plane   397d   v1.27.3
+
+
+delete POD
+
+
+kaushik@Kaushiks-MacBook-Air minikube-ns % kubectl delete pod nginx-web-server
+pod "nginx-web-server" deleted
+kaushik@Kaushiks-MacBook-Air minikube-ns % kubectl get pods
+NAME                           READY   STATUS    RESTARTS        AGE
+
+kaushik@Kaushiks-MacBook-Air minikube-ns %
+
+
+kaushik@Kaushiks-MacBook-Air minikube-ns % kubectl get pods
+NAME                           READY   STATUS    RESTARTS        AGE
+weshopify-webservers           1/1     Running   0               8s
+
+kaushik@Kaushiks-MacBook-Air minikube-ns % kubectl get pods -o wide
+NAME                           READY   STATUS    RESTARTS        AGE    IP            NODE       NOMINATED NODE   READINESS GATES
+weshopify-webservers           1/1     Running   0               13s    10.244.0.10   minikube   <none>           <none>
+kaushik@Kaushiks-MacBook-Air minikube-ns %
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods
+NAME               READY   STATUS    RESTARTS   AGE
+apache2-server     1/1     Running   0          6m49s
+nginx-web-server   1/1     Running   0          8m44s
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl delete -f minikube-ns/nginx-server-pod.yml 
+pod "nginx-web-server" deleted
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl delete -f minikube-ns/apache-server-pod.yml 
+pod "apache2-server" deleted
+
+
+Adding Labels
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods -o wide
+NAME             READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+apache2-server   1/1     Running   0          15s   10.244.0.31   minikube   <none>           <none>
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods -o wide --show-labels
+NAME             READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES   LABELS
+apache2-server   1/1     Running   0          30s   10.244.0.31   minikube   <none>           <none>            app=apache-app,environment=prod
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods --show-labels 
+NAME             READY   STATUS    RESTARTS   AGE   LABELS
+apache2-server   1/1     Running   0          40s   app=apache-app,environment=prod
+
+
+
+
+
+-========
+
+
+ReplicaSets:
+
+sample rs yaml file:
+
+
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: nginx-replicaset
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-app
+      
+  template: 
+    metadata:
+      labels:
+        environment: development
+        app: nginx-app
+    spec:
+      containers:
+        - name: nginx-rs-container 
+          image:  nginx:latest 
+          ports:
+            - containerPort: 80
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl apply -f minikube-ns/replicasets/nginx-rs.yml 
+replicaset.apps/nginx-replicaset created
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get rs
+NAME               DESIRED   CURRENT   READY   AGE
+nginx-replicaset   3         3         3       68s
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods
+NAME                     READY   STATUS    RESTARTS   AGE
+apache2-server           1/1     Running   0          64m
+nginx-replicaset-2k966   1/1     Running   0          91s
+nginx-replicaset-lcrs2   1/1     Running   0          91s
+nginx-replicaset-tk65z   1/1     Running   0          91s
+kaushik@Kaushiks-MacBook-Air kubernetes %
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods -o wide                 
+NAME                     READY   STATUS              RESTARTS   AGE     IP            NODE       NOMINATED NODE   READINESS GATES
+apache2-server           1/1     Running             0          67m     10.244.0.31   minikube   <none>           <none>
+nginx-replicaset-2k966   1/1     Running             0          4m34s   10.244.0.32   minikube   <none>           <none>
+nginx-replicaset-6qh4z   0/1     ContainerCreating   0          3s      <none>        minikube   <none>           <none>
+nginx-replicaset-lcrs2   1/1     Running             0          4m34s   10.244.0.34   minikube   <none>           <none>
+
+      
+
+
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get rs     # get all 
+NAME               DESIRED   CURRENT   READY   AGE
+nginx-replicaset   3         3         3       8m5s
+
+
+
+# describe replicaset 
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl describe rs nginx-replicaset || kubectl describe replicaset  nginx-replicaset
+Name:         nginx-replicaset
+Namespace:    default
+Selector:     app=nginx-app
+Labels:       <none>
+Annotations:  <none>
+Replicas:     3 current / 3 desired
+Pods Status:  3 Running / 0 Waiting / 0 Succeeded / 0 Failed
+Pod Template:
+  Labels:  app=nginx-app
+           environment=development
+  Containers:
+   nginx-rs-container:
+    Image:         nginx:latest
+    Port:          80/TCP
+    Host Port:     0/TCP
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Events:
+  Type    Reason            Age    From                   Message
+  ----    ------            ----   ----                   -------
+  Normal  SuccessfulCreate  9m3s   replicaset-controller  Created pod: nginx-replicaset-2k966
+  Normal  SuccessfulCreate  9m3s   replicaset-controller  Created pod: nginx-replicaset-tk65z
+  Normal  SuccessfulCreate  9m3s   replicaset-controller  Created pod: nginx-replicaset-lcrs2
+  Normal  SuccessfulCreate  4m32s  replicaset-controller  Created pod: nginx-replicaset-6qh4z
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods -o wide --show-labels   
+NAME                     READY   STATUS    RESTARTS   AGE     IP            NODE       NOMINATED NODE   READINESS GATES   LABELS
+nginx-replicaset-2k966   1/1     Running   0          14m     10.244.0.32   minikube   <none>           <none>            app=nginx-app,environment=development
+nginx-replicaset-6qh4z   1/1     Running   0          9m49s   10.244.0.35   minikube   <none>           <none>            app=nginx-app,environment=development
+nginx-replicaset-lcrs2   1/1     Running   0          14m     10.244.0.34   minikube   <none>           <none>            app=nginx-app,environment=development
+
+
+============================
+If we try to run pod with same labels then replicaset-controller would deny
+
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl run nginx-webserver --image=nginx:latest --labels=app=nginx-app restart=Never
+pod/nginx-webserver created
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods                                                                     
+NAME                     READY   STATUS        RESTARTS   AGE
+nginx-replicaset-2k966   1/1     Running       0          16m
+nginx-replicaset-6qh4z   1/1     Running       0          11m
+nginx-replicaset-lcrs2   1/1     Running       0          16m
+nginx-webserver          0/1     Terminating   0          2s
+
+
+
+
+=========
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl label pod nginx-replicaset-hpldk app- 
+pod/nginx-replicaset-hpldk unlabeled
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods --show-labels               
+NAME                     READY   STATUS    RESTARTS   AGE    LABELS
+nginx-replicaset-2k966   1/1     Running   0          18m    app=nginx-app,environment=development
+nginx-replicaset-6qh4z   1/1     Running   0          14m    app=nginx-app,environment=development
+nginx-replicaset-hpldk   1/1     Running   0          107s   environment=development
+nginx-replicaset-wrlzt   1/1     Running   0          6s     app=nginx-app,environment=development
+
+
+unlabeled pod removed from the replicaset
+
+
+====>>> kubectl label pod nginx-replicaset-hpldk app=nginx-app
+
+
+Relabeled pods added to the replicaset
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl label pod nginx-replicaset-hpldk app=nginx-app
+pod/nginx-replicaset-hpldk labeled
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods --show-labels                        
+NAME                     READY   STATUS    RESTARTS   AGE     LABELS
+nginx-replicaset-2k966   1/1     Running   0          20m     app=nginx-app,environment=development
+nginx-replicaset-6qh4z   1/1     Running   0          15m     app=nginx-app,environment=development
+nginx-replicaset-hpldk   1/1     Running   0          3m18s   app=nginx-app,environment=development
+kaushik@Kaushiks-MacBook-Air kubernetes %
+
+
+
+========
+
+
+Scale up the replicaset
+
+kubectl scale rs nginx-replicaset --replicas=6
+
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get rs
+NAME               DESIRED   CURRENT   READY   AGE
+nginx-replicaset   3         3         3       22m
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl scale rs nginx-replicaset --replicas=6
+replicaset.apps/nginx-replicaset scaled
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods                              
+NAME                     READY   STATUS              RESTARTS   AGE
+nginx-replicaset-2k966   1/1     Running             0          22m
+nginx-replicaset-5dpv6   1/1     Running             0          10s
+nginx-replicaset-6qh4z   1/1     Running             0          18m
+nginx-replicaset-82xg5   1/1     Running             0          10s
+nginx-replicaset-hpldk   1/1     Running             0          5m46s
+nginx-replicaset-l9lmm   0/1     ContainerCreating   0          10s
+kaushik@Kaushiks-MacBook-Air kubernetes %
+
+
+Scale down:::
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl scale rs nginx-replicaset --replicas=2
+replicaset.apps/nginx-replicaset scaled
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods --show-labels                
+NAME                     READY   STATUS    RESTARTS   AGE   LABELS
+nginx-replicaset-2k966   1/1     Running   0          24m   app=nginx-app,environment=development
+nginx-replicaset-6qh4z   1/1     Running   0          19m   app=nginx-app,environment=development
+kaushik@Kaushiks-MacBook-Air kubernetes %
+
+
+=== 
+
+Delete replicaset without deleting pods
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl delete rs nginx-replicaset --cascade=orphan
+replicaset.apps "nginx-replicaset" deleted
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods --show-labels                     
+NAME                     READY   STATUS    RESTARTS   AGE   LABELS
+nginx-replicaset-2k966   1/1     Running   0          26m   app=nginx-app,environment=development
+nginx-replicaset-6qh4z   1/1     Running   0          22m   app=nginx-app,environment=development
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get rs                
+No resources found in default namespace.
+kaushik@Kaushiks-MacBook-Air kubernetes %
+
+
+
+=====
+
+Delete replicaset with cascade pods in injected
+
+
+NAME                     READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+nginx-replicaset-8nmdq   1/1     Running   0          16s   10.244.0.45   minikube   <none>           <none>
+nginx-replicaset-l5b7v   1/1     Running   0          16s   10.244.0.43   minikube   <none>           <none>
+nginx-replicaset-wxg6m   1/1     Running   0          16s   10.244.0.44   minikube   <none>           <none>
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl delete rs nginx-replicaset 
+replicaset.apps "nginx-replicaset" deleted
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get rs
+No resources found in default namespace.
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods
+No resources found in default namespace.
+kaushik@Kaushiks-MacBook-Air kubernetes %
+
+
+
+
+
+
+===========================
+
+
+
+Deployments ==> Advacne version of replicasets which supports rolling updates
+
+
+Sample deployement file:
+
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name:  nginx-deployment-meta
+  labels:
+    app: nginx-deployment-lb
+
+spec:
+  replicas : 3
+  selector:
+    matchLabels:
+      app: nginx-deployment
+
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+        environment: dev
+    spec:
+      containers:
+        - name: nginx-web-container
+          image: nginx:latest 
+          ports:
+           - containerPort: 80
+
+
+
+
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl apply -f minikube-ns/deployments/deployments.yml 
+deployment.apps/nginx-deployment-meta created
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get deployments                                  
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment-meta   2/3     3            2           10s
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get rs         
+NAME                              DESIRED   CURRENT   READY   AGE
+nginx-deployment-meta-b56dbb846   3         3         3       15s
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get pods -o wide
+NAME                                    READY   STATUS    RESTARTS   AGE   IP            NODE       NOMINATED NODE   READINESS GATES
+nginx-deployment-meta-b56dbb846-cddj5   1/1     Running   0          46s   10.244.0.49   minikube   <none>           <none>
+nginx-deployment-meta-b56dbb846-mswdl   1/1     Running   0          46s   10.244.0.47   minikube   <none>           <none>
+nginx-deployment-meta-b56dbb846-rsbkv   1/1     Running   0          46s   10.244.0.48   minikube   <none>           <none>
+kaushik@Kaushiks-MacBook-Air kubernetes % 
+
+
+
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get deployment nginx-deployment-meta
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment-meta   3/3     3            3           2m1s
+
+
+
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl get deployments
+NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
+nginx-deployment-meta   3/3     3            3           3m34s
+kaushik@Kaushiks-MacBook-Air kubernetes % kubectl describe deployment nginx-deployment-meta
+Name:                   nginx-deployment-meta
+Namespace:              default
+CreationTimestamp:      Tue, 20 Aug 2024 19:47:16 +0530
+Labels:                 app=nginx-deployment-lb
+Annotations:            deployment.kubernetes.io/revision: 1
+Selector:               app=nginx-deployment
+Replicas:               3 desired | 3 updated | 3 total | 3 available | 0 unavailable
+StrategyType:           RollingUpdate
+MinReadySeconds:        0
+RollingUpdateStrategy:  25% max unavailable, 25% max surge
+Pod Template:
+  Labels:  app=nginx-deployment
+           environment=dev
+  Containers:
+   nginx-web-container:
+    Image:         nginx:latest
+    Port:          80/TCP
+    Host Port:     0/TCP
+    Environment:   <none>
+    Mounts:        <none>
+  Volumes:         <none>
+  Node-Selectors:  <none>
+  Tolerations:     <none>
+Conditions:
+  Type           Status  Reason
+  ----           ------  ------
+  Available      True    MinimumReplicasAvailable
+  Progressing    True    NewReplicaSetAvailable
+OldReplicaSets:  <none>
+NewReplicaSet:   nginx-deployment-meta-b56dbb846 (3/3 replicas created)
+Events:
+  Type    Reason             Age   From                   Message
+  ----    ------             ----  ----                   -------
+  Normal  ScalingReplicaSet  4m6s  deployment-controller  Scaled up replica set nginx-deployment-meta-b56dbb846 to 3
+kaushik@Kaushiks-MacBook-Air kubernetes % 
