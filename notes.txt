@@ -463,4 +463,4 @@ Events:
   Type    Reason             Age   From                   Message
   ----    ------             ----  ----                   -------
   Normal  ScalingReplicaSet  4m6s  deployment-controller  Scaled up replica set nginx-deployment-meta-b56dbb846 to 3
-kaushik@Kaushiks-MacBook-Air kubernetes % 
+kaushik@Kaushiks-MacBook-Air kubernetes %
